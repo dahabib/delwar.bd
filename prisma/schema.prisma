@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // Connection URL moved to prisma.config.ts
+}
+
+// Auth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          String    @default("user")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+}
+
+// Portfolio Models
+model Portfolio {
+  id           String  @id @default(cuid())
+  name         String
+  title        String
+  description  String?
+  bio          String?
+  email        String?
+  phone        String?
+  location     String?
+  profileImage String?
+  coverImage   String?
+  favicon      String?
+  logo         String?
+  website      String?
+  resumeUrl    String?
+
+  // Social Links
+  github    String?
+  linkedin  String?
+  twitter   String?
+  instagram String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  skills       Skill[]
+  experiences  Experience[]
+  projects     Project[]
+  testimonials Testimonial[]
+  contact      Contact?
+}
+
+model Skill {
+  id          String    @id @default(cuid())
+  name        String
+  category    String
+  proficiency Int       @default(75)
+  description String?
+  icon        String?
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([portfolioId])
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  title       String
+  company     String
+  location    String?
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean   @default(false)
+  image       String?
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([portfolioId])
+}
+
+model Project {
+  id               String    @id @default(cuid())
+  title            String
+  description      String?
+  shortDescription String?
+  image            String?
+  images           String? // JSON array of image URLs
+  link             String?
+  github           String?
+  technologies     String? // JSON array of tech stack
+  portfolioId      String
+  portfolio        Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  featured         Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([portfolioId])
+}
+
+model Testimonial {
+  id          String    @id @default(cuid())
+  name        String
+  title       String?
+  company     String?
+  content     String
+  image       String?
+  rating      Int       @default(5)
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([portfolioId])
+}
+
+model Contact {
+  id            String    @id @default(cuid())
+  email         String
+  phone         String?
+  address       String?
+  message       String?
+  responseEmail String?
+  portfolioId   String    @unique
+  portfolio     Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
