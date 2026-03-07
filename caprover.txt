@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "imageName": "delwar-bd",
+  "imageName": "delwar",
   "nginx": {
     "maxBodySize": 50
   }
