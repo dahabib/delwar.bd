@@ -23,10 +23,14 @@ RUN adduser --system --uid 1001 sveltekit
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
+COPY --from=builder /app/node_modules/pg ./node_modules/pg
 
 USER sveltekit
 
 EXPOSE 3000
 
 ENV PORT=3000
-CMD ["node", "build"]
+
+CMD ["sh", "-c", "npx prisma db push --skip-generate && node build"]
