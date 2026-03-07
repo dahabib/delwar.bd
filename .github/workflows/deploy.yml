@@ -1,0 +1,36 @@
+name: Deploy to CapRover
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: yarn prisma generate
+
+      - name: Build
+        run: yarn build
+
+      - name: Create tarball
+        run: tar -cvf deploy.tar build package.json package-lock.json prisma/
+
+      - name: Deploy to CapRover
+        uses: caprover/deploy-from-github@v1.2.1
+        with:
+          server: '${{ secrets.CAPROVER_SERVER }}'
+          app: '${{ secrets.CAPROVER_APP }}'
+          token: '${{ secrets.CAPROVER_APP_TOKEN }}'
