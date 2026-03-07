@@ -1,133 +1,205 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+  import type { PageData } from './$types';
+  import * as Card from "$lib/components/ui/card/index.js";
+  import { Button } from "$lib/components/ui/button/index.js";
+  import { Separator } from "$lib/components/ui/separator/index.js";
+  import { onMount } from 'svelte';
+  import { Plus, Trash2, Edit, ExternalLink, Github, Eye, Calendar, BarChart3, Clock, Settings } from 'lucide-svelte';
 
-	let stats = $state({
-		skills: 0,
-		experiences: 0,
-		projects: 0,
-		testimonials: 0,
-	});
+  let { data }: { data: PageData } = $props();
 
-	onMount(async () => {
-		try {
-			const skillsRes = await fetch('/api/skills');
-			const experienceRes = await fetch('/api/experience');
-			const projectsRes = await fetch('/api/projects');
-			const testimonialsRes = await fetch('/api/testimonials');
+  interface PortfolioItem {
+    id: string;
+    title: string;
+    description: string;
+    imageUrl: string | null;
+    githubUrl: string | null;
+    liveUrl: string | null;
+    tags: string;
+    category: string;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+  }
 
-			if (skillsRes.ok) stats.skills = (await skillsRes.json()).length;
-			if (experienceRes.ok) stats.experiences = (await experienceRes.json()).length;
-			if (projectsRes.ok) stats.projects = (await projectsRes.json()).length;
-			if (testimonialsRes.ok) stats.testimonials = (await testimonialsRes.json()).length;
-		} catch (error) {
-			console.error('Error loading stats:', error);
-		}
-	});
+  let portfolioItems: PortfolioItem[] = $state([]);
+  let loading = $state(true);
+  let error: string | null = $state(null);
+  let visible = $state(false);
+
+  const stats = $derived([
+    { label: 'Total Projects', value: portfolioItems.length, icon: BarChart3, color: 'bg-primary/10 text-primary' },
+    { label: 'Live Projects', value: portfolioItems.filter(p => p.liveUrl).length, icon: ExternalLink, color: 'bg-green-500/10 text-green-500' },
+    { label: 'With GitHub', value: portfolioItems.filter(p => p.githubUrl).length, icon: Github, color: 'bg-foreground/10 text-foreground' },
+    { label: 'This Month', value: portfolioItems.filter(p => {
+      const now = new Date();
+      const created = new Date(p.createdAt);
+      return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+    }).length, icon: Calendar, color: 'bg-blue-500/10 text-blue-500' },
+  ]);
+
+  const recentItems = $derived(portfolioItems.slice(0, 5));
+
+  async function loadPortfolioItems() {
+    loading = true;
+    error = null;
+    try {
+      const res = await fetch('/dashboard/portfolio');
+      if (res.ok) {
+        portfolioItems = await res.json();
+      } else {
+        const errData = await res.json();
+        error = errData.message || 'Failed to load portfolio items';
+      }
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Network error';
+    } finally {
+      loading = false;
+    }
+  }
+
+  $effect(() => {
+    if (data.session?.user) {
+      loadPortfolioItems();
+    } else {
+      portfolioItems = [];
+      loading = false;
+    }
+  });
+
+  onMount(() => {
+    setTimeout(() => visible = true, 100);
+  });
+
+  async function handleDelete(id: string) {
+    if (!confirm('Are you sure you want to delete this item?')) {
+      return;
+    }
+    try {
+      const res = await fetch(`/dashboard/portfolio/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        portfolioItems = portfolioItems.filter(item => item.id !== id);
+      } else {
+        const errData = await res.json();
+        alert(errData.message || 'Failed to delete item');
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Network error');
+    }
+  }
 </script>
 
-<svelte:head>
-	<title>Dashboard - Delwar Ahmed</title>
-</svelte:head>
-
 <div class="space-y-8">
-	<div>
-		<h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-2">Dashboard Overview</h1>
-		<p class="text-slate-600 dark:text-slate-400">Manage your portfolio content and settings</p>
-	</div>
+  <!-- Welcome Section -->
+  <div class="{visible ? 'animate-fade-in' : 'opacity-0'}">
+    <h1 class="text-3xl font-bold tracking-tight">Welcome back!</h1>
+    <p class="text-muted-foreground mt-1">Here's an overview of your portfolio.</p>
+  </div>
 
-	<!-- Stats Grid -->
-	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-		<a href="/dashboard/skills" class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-600 transition cursor-pointer">
-			<div class="flex items-center justify-between">
-				<div>
-					<p class="text-slate-600 dark:text-slate-400 text-sm">Total Skills</p>
-					<p class="text-3xl font-bold text-slate-900 dark:text-white">{stats.skills}</p>
-				</div>
-				<div class="text-4xl">💡</div>
-			</div>
-		</a>
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    {#each stats as stat, i}
+      <Card.Root class="{visible ? 'animate-fade-in' : 'opacity-0'}" style="animation-delay: {100 + i * 50}ms">
+        <Card.Content class="pt-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">{stat.label}</p>
+              <p class="text-3xl font-bold mt-1">{stat.value}</p>
+            </div>
+            <div class="h-12 w-12 rounded-lg flex items-center justify-center {stat.color}">
+              <stat.icon class="h-6 w-6" />
+            </div>
+          </div>
+        </Card.Content>
+      </Card.Root>
+    {/each}
+  </div>
 
-		<a href="/dashboard/experience" class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-600 transition cursor-pointer">
-			<div class="flex items-center justify-between">
-				<div>
-					<p class="text-slate-600 dark:text-slate-400 text-sm">Experiences</p>
-					<p class="text-3xl font-bold text-slate-900 dark:text-white">{stats.experiences}</p>
-				</div>
-				<div class="text-4xl">📝</div>
-			</div>
-		</a>
+  <!-- Quick Actions -->
+  <div class="flex flex-wrap gap-4 {visible ? 'animate-fade-in delay-300' : 'opacity-0'}">
+    <Button href="/dashboard/add" class="gap-2">
+      <Plus class="h-4 w-4" />
+      Add Project
+    </Button>
+    <Button href="/dashboard/homepage" variant="outline" class="gap-2">
+      <Edit class="h-4 w-4" />
+      Edit Homepage
+    </Button>
+    <Button href="/dashboard/settings" variant="outline" class="gap-2">
+      <Settings class="h-4 w-4" />
+      Settings
+    </Button>
+  </div>
 
-		<a href="/dashboard/projects" class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-600 transition cursor-pointer">
-			<div class="flex items-center justify-between">
-				<div>
-					<p class="text-slate-600 dark:text-slate-400 text-sm">Projects</p>
-					<p class="text-3xl font-bold text-slate-900 dark:text-white">{stats.projects}</p>
-				</div>
-				<div class="text-4xl">🚀</div>
-			</div>
-		</a>
+  <Separator />
 
-		<a href="/dashboard/testimonials" class="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-600 transition cursor-pointer">
-			<div class="flex items-center justify-between">
-				<div>
-					<p class="text-slate-600 dark:text-slate-400 text-sm">Testimonials</p>
-					<p class="text-3xl font-bold text-slate-900 dark:text-white">{stats.testimonials}</p>
-				</div>
-				<div class="text-4xl">⭐</div>
-			</div>
-		</a>
-	</div>
+  <!-- Recent Projects -->
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-semibold">Recent Projects</h2>
+      <Button href="/dashboard/portfolio" variant="ghost" size="sm">View all</Button>
+    </div>
 
-	<!-- Quick Actions -->
-	<div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-		<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Quick Actions</h2>
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-			<a href="/dashboard/portfolio" class="p-4 bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg hover:shadow-md transition">
-				<p class="font-bold text-blue-900 dark:text-blue-100">🎯 Portfolio Settings</p>
-				<p class="text-sm text-blue-700 dark:text-blue-200">Update your profile information</p>
-			</a>
-			<a href="/dashboard/skills" class="p-4 bg-linear-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg hover:shadow-md transition">
-				<p class="font-bold text-green-900 dark:text-green-100">💡 Add Skills</p>
-				<p class="text-sm text-green-700 dark:text-green-200">Showcase your technical expertise</p>
-			</a>
-			<a href="/dashboard/projects" class="p-4 bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg hover:shadow-md transition">
-				<p class="font-bold text-purple-900 dark:text-purple-100">🚀 Add Projects</p>
-				<p class="text-sm text-purple-700 dark:text-purple-200">Display your best work</p>
-			</a>
-		</div>
-	</div>
-
-	<!-- Recent Activity (Placeholder) -->
-	<div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-		<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Getting Started</h2>
-		<div class="space-y-4">
-			<div class="flex items-start gap-4">
-				<div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center shrink-0 mt-1">
-					<span class="text-blue-600 dark:text-blue-400 font-bold">1</span>
-				</div>
-				<div>
-					<p class="font-bold text-slate-900 dark:text-white">Complete your portfolio settings</p>
-					<p class="text-slate-600 dark:text-slate-400 text-sm">Add your profile image, bio, and contact information</p>
-				</div>
-			</div>
-			<div class="flex items-start gap-4">
-				<div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center shrink-0 mt-1">
-					<span class="text-blue-600 dark:text-blue-400 font-bold">2</span>
-				</div>
-				<div>
-					<p class="font-bold text-slate-900 dark:text-white">Add your technical skills</p>
-					<p class="text-slate-600 dark:text-slate-400 text-sm">List the technologies and programming languages you're proficient with</p>
-				</div>
-			</div>
-			<div class="flex items-start gap-4">
-				<div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center shrink-0 mt-1">
-					<span class="text-blue-600 dark:text-blue-400 font-bold">3</span>
-				</div>
-				<div>
-					<p class="font-bold text-slate-900 dark:text-white">Showcase your projects</p>
-					<p class="text-slate-600 dark:text-slate-400 text-sm">Add your best work with descriptions and live links</p>
-				</div>
-			</div>
-		</div>
-	</div>
+    {#if loading}
+      <div class="grid gap-4">
+        {#each Array(3) as _}
+          <div class="h-20 rounded-lg bg-muted animate-pulse"></div>
+        {/each}
+      </div>
+    {:else if portfolioItems.length === 0}
+      <Card.Root class="border-dashed">
+        <Card.Content class="flex flex-col items-center justify-center py-8">
+          <Eye class="h-12 w-12 text-muted-foreground mb-4" />
+          <p class="text-muted-foreground mb-4">No projects yet.</p>
+          <Button href="/dashboard/add" variant="secondary">Add your first project</Button>
+        </Card.Content>
+      </Card.Root>
+    {:else}
+      <div class="space-y-4">
+        {#each recentItems as item, i (item.id)}
+          <Card.Root class="{visible ? 'animate-fade-in' : 'opacity-0'}" style="animation-delay:{400 + i * 50}ms">
+            <Card.Content class="flex items-center gap-4 p-4">
+              <div class="h-16 w-24 rounded-md overflow-hidden bg-muted shrink-0">
+                <img
+                  src={item.imageUrl || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=100'}
+                  alt={item.title}
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-medium truncate">{item.title}</h3>
+                <p class="text-sm text-muted-foreground truncate">{item.description}</p>
+                <div class="flex items-center gap-2 mt-1">
+                  <Clock class="h-3 w-3 text-muted-foreground" />
+                  <span class="text-xs text-muted-foreground">
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                {#if item.liveUrl}
+                  <Button size="icon-sm" variant="ghost" href={item.liveUrl} target="_blank" aria-label="View live">
+                    <ExternalLink class="h-4 w-4" />
+                  </Button>
+                {/if}
+                {#if item.githubUrl}
+                  <Button size="icon-sm" variant="ghost" href={item.githubUrl} target="_blank" aria-label="View on GitHub">
+                    <Github class="h-4 w-4" />
+                  </Button>
+                {/if}
+                <Button size="icon-sm" variant="ghost" href="/dashboard/edit/{item.id}" aria-label="Edit">
+                  <Edit class="h-4 w-4" />
+                </Button>
+                <Button size="icon-sm" variant="ghost" onclick={() => handleDelete(item.id)} aria-label="Delete">
+                  <Trash2 class="h-4 w-4" />
+                </Button>
+              </div>
+            </Card.Content>
+          </Card.Root>
+        {/each}
+      </div>
+    {/if}
+  </div>
 </div>

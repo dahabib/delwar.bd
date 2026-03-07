@@ -1,16 +1,17 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  // Connection URL moved to prisma.config.ts
 }
 
-// Auth.js Models
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -24,7 +25,8 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -37,6 +39,17 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  portfolioItems PortfolioItem[]
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -45,130 +58,61 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  password      String?
-  image         String?
-  role          String    @default("user")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-}
-
-// Portfolio Models
-model Portfolio {
-  id           String  @id @default(cuid())
-  name         String
-  title        String
-  description  String?
-  bio          String?
-  email        String?
-  phone        String?
-  location     String?
-  profileImage String?
-  coverImage   String?
-  favicon      String?
-  logo         String?
-  website      String?
-  resumeUrl    String?
-
-  // Social Links
-  github    String?
-  linkedin  String?
-  twitter   String?
-  instagram String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  skills       Skill[]
-  experiences  Experience[]
-  projects     Project[]
-  testimonials Testimonial[]
-  contact      Contact?
-}
-
-model Skill {
-  id          String    @id @default(cuid())
-  name        String
-  category    String
-  proficiency Int       @default(75)
-  description String?
-  icon        String?
-  portfolioId String
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([portfolioId])
-}
-
-model Experience {
+model PortfolioItem {
   id          String    @id @default(cuid())
   title       String
-  company     String
-  location    String?
-  description String?
-  startDate   DateTime
-  endDate     DateTime?
-  current     Boolean   @default(false)
-  image       String?
-  portfolioId String
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  description String
+  imageUrl    String?
+  githubUrl   String?
+  liveUrl     String?
+  tags        String
+  category    String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([portfolioId])
+  @@index([userId])
 }
 
-model Project {
-  id               String    @id @default(cuid())
-  title            String
-  description      String?
-  shortDescription String?
-  image            String?
-  images           String? // JSON array of image URLs
-  link             String?
-  github           String?
-  technologies     String? // JSON array of tech stack
-  portfolioId      String
-  portfolio        Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  featured         Boolean   @default(false)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  @@index([portfolioId])
+model HomepageContent {
+  id              String   @id @default("default")
+  heroTagline     String
+  heroTitle       String
+  heroSubtitle    String
+  heroShowBadge   Boolean  @default(true)
+  skillsTitle      String
+  skillsSubtitle  String
+  skillsItems     String
+  ctaTitle        String
+  ctaSubtitle     String
+  ctaButtonText   String
+  updatedAt       DateTime @updatedAt
 }
 
-model Testimonial {
-  id          String    @id @default(cuid())
-  name        String
-  title       String?
-  company     String?
-  content     String
-  image       String?
-  rating      Int       @default(5)
-  portfolioId String
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([portfolioId])
-}
-
-model Contact {
-  id            String    @id @default(cuid())
-  email         String
-  phone         String?
-  address       String?
-  message       String?
-  responseEmail String?
-  portfolioId   String    @unique
-  portfolio     Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model SiteSettings {
+  id                        String   @id @default("default")
+  profileName               String
+  profileTitle              String
+  profileBio                String
+  profileEmail              String
+  profilePhone              String
+  profileLocation           String
+  profileLinkedin           String
+  profileTwitter            String
+  profileGithub             String
+  siteTitle                 String
+  siteDescription           String
+  siteKeywords              String
+  siteShowGithubStats       Boolean  @default(true)
+  siteShowVisitorCount      Boolean  @default(true)
+  appearanceTheme           String   @default("system")
+  appearancePrimaryColor   String   @default("#6366f1")
+  appearanceAnimationEnabled Boolean @default(true)
+  appearanceReducedMotion  Boolean  @default(false)
+  notificationsEmail        Boolean  @default(true)
+  notificationsNewVisitor   Boolean  @default(false)
+  notificationsContactAlert Boolean  @default(true)
+  notificationsWeeklyReport Boolean  @default(false)
+  updatedAt                 DateTime @updatedAt
 }

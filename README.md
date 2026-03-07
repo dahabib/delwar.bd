@@ -5,6 +5,7 @@ A professional, full-stack portfolio web application built with SvelteKit, Tailw
 ## 🚀 Features
 
 ### Public Portfolio
+
 - **Hero Section**: Professional introduction with call-to-action buttons
 - **Skills Showcase**: Categorized technical skills display
 - **Experience Timeline**: Work history and professional experience
@@ -15,6 +16,7 @@ A professional, full-stack portfolio web application built with SvelteKit, Tailw
 - **Professional UI**: Eye-friendly color scheme and typography
 
 ### Admin Dashboard
+
 - **Authentication**: Secure sign-in with Auth.js
 - **Portfolio Settings**: Manage personal information, profile image, favicon, logo
 - **Skills Management**: Add, edit, delete technical skills with proficiency levels
@@ -29,21 +31,23 @@ A professional, full-stack portfolio web application built with SvelteKit, Tailw
 - **Frontend**: SvelteKit 5, Svelte 5
 - **UI Components**: shadcn-svelte
 - **Styling**: Tailwind CSS 4
-- **Backend**: Node.js
+- **Backend**: SvelteKit
 - **Database**: SQLite with Prisma ORM
-- **Authentication**: Auth.js (SvelteKit)
+- **Authentication**: Auth.js (Github provider)
 - **Package Manager**: Yarn
 - **Deployment Ready**: Server-side rendering with SSR
 
 ## 🚀 Getting Started
 
 ### Installation
+
 ```bash
 yarn install
 yarn prisma migrate dev --name init
 ```
 
 ### Running
+
 ```bash
 # Development
 yarn dev
@@ -52,28 +56,48 @@ yarn dev
 yarn build && yarn preview
 ```
 
-### Demo Credentials
-- **Email**: admin@example.com
-- **Password**: admin123
-
 ## 📂 Project Structure
 
 ```
 src/
 ├── lib/
-│   ├── auth.ts              # Auth.js configuration
-│   ├── prisma.ts            # Prisma Client
-│   └── components/
+│   ├── assets/                  # Static assets (favicons, icons)
+│   ├── auth/                    # Auth.js configuration
+│   ├── components/
+│   │   └── ui/                  # shadcn-svelte UI components
+│   ├── hooks/                   # SvelteKit hooks
+│   ├── server/
+│   │   ├── content.ts           # Content management utilities
+│   │   └── prisma.ts            # Prisma Client
+│   └── stores/                  # Svelte stores
 ├── routes/
-│   ├── +page.svelte         # Home/Portfolio
-│   ├── auth/signin/         # Sign in page
-│   ├── api/                 # API endpoints
-│   └── dashboard/           # Protected dashboard
+│   ├── api/
+│   │   ├── auth/[...auth0]/     # Auth.js API route
+│   │   ├── homepage/            # Homepage API endpoints
+│   │   ├── portfolio/           # Portfolio API endpoints
+│   │   └── settings/            # Settings API endpoints
+│   ├── contact/                 # Contact page
+│   ├── dashboard/
+│   │   ├── add/                 # Add new portfolio item
+│   │   ├── edit/[id]/           # Edit portfolio item
+│   │   ├── homepage/            # Homepage settings
+│   │   ├── portfolio/           # Portfolio management
+│   │   ├── settings/            # Dashboard settings
+│   │   ├── +layout.svelte       # Dashboard layout
+│   │   └── +page.svelte         # Dashboard home
+│   ├── login/                   # Login page
+│   ├── portfolio/
+│   │   └── [id]/               # Portfolio detail page
+│   ├── +layout.svelte           # App layout
+│   ├── +page.svelte             # Home/Portfolio
+│   └── +page.server.ts          # Home page server load
+├── app.d.ts                     # TypeScript declarations
+└── hooks.server.ts              # Server hooks
 ```
 
 ## 🔐 Authentication
 
-Uses Auth.js with credentials provider. Protected routes redirect to sign-in.
+Protected routes redirect to sign-in.
 
 ## 📝 API Endpoints
 
@@ -85,7 +109,7 @@ Uses Auth.js with credentials provider. Protected routes redirect to sign-in.
 
 ## 🎨 Customization
 
-Update your information through the Dashboard Portfolio Settings or `.env` file.
+Update your information through the Dashboard Portfolio Settings.
 
 ## 📱 Responsive Design
 
@@ -93,14 +117,13 @@ Fully responsive: mobile, tablet, and desktop.
 
 ## 🔒 Security
 
-- Passwords hashed with bcryptjs
 - Session management via Auth.js
 - Protected API routes
 - CSRF protection
 
 ## 📦 Deployment
 
-Vercel, Docker, or self-hosted Node.js compatible servers.
+Self-hosted Node.js compatible servers.
 
 ## 📄 License
 
@@ -108,6 +131,6 @@ MIT License
 
 ---
 
-**Portfolio**: https://delwar.bd  
+**Portfolio**: <https://delwar.bd>  
 **Developer**: Delwar Ahmed  
 **Location**: Dhaka, Bangladesh

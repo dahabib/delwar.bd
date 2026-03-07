@@ -1,48 +1,15 @@
-import { json } from "@sveltejs/kit";
-import type { RequestHandler } from "@sveltejs/kit";
-import prisma from "$lib/prisma";
+import { json } from '@sveltejs/kit';
+import { prisma } from '$lib/server/prisma';
+import type { RequestHandler } from './$types';
 
+// GET /api/portfolio
+// Lists all public portfolio items
 export const GET: RequestHandler = async () => {
-  try {
-    const portfolio = await prisma.portfolio.findFirst({
-      include: {
-        skills: true,
-        experiences: true,
-        projects: true,
-        testimonials: true,
-        contact: true,
-      },
-    });
+  const portfolioItems = await prisma.portfolioItem.findMany({
+    // In a real application, you might add a filter like:
+    // where: { isPublic: true, userId: 'delwar_ahmed_user_id' },
+    // For now, fetching all items.
+  });
 
-    if (!portfolio) {
-      return json(null);
-    }
-
-    return json(portfolio);
-  } catch (error) {
-    console.error("Error fetching portfolio:", error);
-    return json({ error: "Failed to fetch portfolio" }, { status: 500 });
-  }
-};
-
-export const POST: RequestHandler = async ({ request }) => {
-  try {
-    const data = await request.json();
-
-    const portfolio = await prisma.portfolio.upsert({
-      where: { id: data.id || "main" },
-      update: data,
-      create: {
-        id: "main",
-        name: "Delwar Ahmed",
-        title: "Fullstack Developer",
-        ...data,
-      },
-    });
-
-    return json(portfolio);
-  } catch (error) {
-    console.error("Error updating portfolio:", error);
-    return json({ error: "Failed to update portfolio" }, { status: 500 });
-  }
+  return json(portfolioItems);
 };
