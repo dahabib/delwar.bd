@@ -34,4 +34,4 @@ EXPOSE 3000
 
 ENV PORT=3000
 
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node build"]
+CMD ["sh", "-c", "npx prisma db push && node build"]
