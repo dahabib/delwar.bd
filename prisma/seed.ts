@@ -1,18 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import { readFileSync } from 'fs';
 
-const env = process.env.NODE_ENV || 'development';
-const dotenv = await import('dotenv');
-dotenv.config();
-
-const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
-
-const adapter = new PrismaBetterSqlite3({
-  url: databaseUrl,
-});
-
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 const skillsItems = [
   {
