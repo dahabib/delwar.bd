@@ -1,5 +1,6 @@
 FROM node:20-alpine AS base
-RUN apk add --no-cache sqlite-libs
+RUN apk add --no-cache sqlite-libs openssl
+RUN apk add --no-cache libssl1.1 || apk add --no-cache libssl3
 
 FROM base AS deps
 WORKDIR /app
