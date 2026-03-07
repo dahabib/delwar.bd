@@ -25,12 +25,13 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Create tarball
-        run: tar -cvf deploy.tar build package.json yarn.lock prisma/
+      - name: Install CapRover CLI
+        run: npm install -g caprover
 
       - name: Deploy to CapRover
-        uses: caprover/deploy-from-github@v1.2.0
-        with:
-          server: '${{ secrets.CAPROVER_SERVER }}'
-          app: '${{ secrets.CAPROVER_APP }}'
-          token: '${{ secrets.CAPROVER_APP_TOKEN }}'
+        run: |
+          caprover deploy \
+            -- captain.${{ secrets.CAPROVER_DOMAIN }} \
+            --password ${{ secrets.CAPROVER_PASSWORD }} \
+            --appName ${{ secrets.CAPROVER_APP }} \
+            --branch main
