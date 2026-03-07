@@ -1,5 +1,8 @@
 node_modules
 
+# CapRover
+caprover-deploy.json
+
 # Output
 .output
 .vercel
