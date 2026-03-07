@@ -11,6 +11,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN yarn prisma generate
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 RUN yarn build
 
 FROM base AS runner
