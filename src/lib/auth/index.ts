@@ -2,7 +2,12 @@ import { SvelteKitAuth } from '@auth/sveltekit';
 import GitHub from '@auth/sveltekit/providers/github';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '$lib/server/prisma';
-import { AUTH_GITHUB_ID, AUTH_GITHUB_SECRET, AUTH_SECRET, AUTH_ALLOWED_EMAIL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+const AUTH_GITHUB_ID = env.AUTH_GITHUB_ID || '';
+const AUTH_GITHUB_SECRET = env.AUTH_GITHUB_SECRET || '';
+const AUTH_SECRET = env.AUTH_SECRET || '';
+const AUTH_ALLOWED_EMAIL = env.AUTH_ALLOWED_EMAIL || '';
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
   adapter: PrismaAdapter(prisma),
