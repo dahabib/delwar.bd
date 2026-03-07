@@ -1,5 +1,5 @@
 FROM node:20-alpine AS base
-RUN apk add --no-cache libpq
+RUN apk add --no-cache sqlite-libs
 
 FROM base AS deps
 WORKDIR /app
@@ -11,7 +11,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN yarn prisma generate
-ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 RUN yarn build
 
 FROM base AS runner
@@ -26,8 +25,6 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
-COPY --from=builder /app/node_modules/pg ./node_modules/pg
 
 USER sveltekit
 
