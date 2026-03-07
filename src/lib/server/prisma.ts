@@ -1,20 +1,22 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import { env } from '$env/dynamic/private';
 import { dev } from '$app/environment';
 
-const DATABASE_URL = env.DATABASE_URL || 'file:./dev.db';
+const { Pool } = pg;
 
-let adapter;
+const DATABASE_URL = env.DATABASE_URL;
 
-if (DATABASE_URL.startsWith('postgresql://')) {
-  adapter = new PrismaPg({ connectionString: DATABASE_URL });
+let prisma;
+
+if (DATABASE_URL?.startsWith('postgresql://')) {
+  const pool = new Pool({ connectionString: DATABASE_URL });
+  const adapter = new PrismaPg(pool);
+  prisma = new PrismaClient({ adapter });
 } else {
-  adapter = new PrismaBetterSqlite3({ url: DATABASE_URL });
+  prisma = new PrismaClient();
 }
-
-const prisma = global.__prisma || new PrismaClient({ adapter });
 
 if (dev) {
   global.__prisma = prisma;
