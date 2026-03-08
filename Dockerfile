@@ -26,11 +26,20 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
+COPY --from=builder /app/node_modules/pg ./node_modules/pg
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
+COPY start.sh ./start.sh
+
+RUN chmod +x ./start.sh
+RUN mkdir -p /app/data && chown -R sveltekit:nodejs /app/data
 
 USER sveltekit
 
 EXPOSE 3000
 
 ENV PORT=3000
+ENV DATABASE_URL="file:/app/data/dev.db"
 
-CMD ["sh", "-c", "npx prisma db push && node build"]
+CMD ["./start.sh"]
