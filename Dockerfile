@@ -35,6 +35,9 @@ COPY --from=builder /app/prisma ./prisma
 # Copy production dependencies
 COPY --from=prod-deps /app/node_modules ./node_modules
 
+# Copy generated Prisma Client (very important)
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
 # Specifically copy Prisma from builder (it's a devDependency but needed for start.sh migrations)
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
