@@ -17,6 +17,9 @@ if [ -n "$DATABASE_URL" ]; then
   esac
   
   ./node_modules/.bin/prisma migrate deploy
+  
+  echo "Seeding database..."
+  ./node_modules/.bin/prisma db seed
 fi
 
 # Start the app

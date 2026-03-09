@@ -19,6 +19,8 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 # Install only production dependencies
 RUN yarn install --frozen-lockfile --production
+# Add tsx for seeding (it's small and very useful for this purpose)
+RUN yarn add tsx
 
 FROM base AS runner
 WORKDIR /app
