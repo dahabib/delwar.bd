@@ -14,6 +14,12 @@ COPY . .
 RUN yarn prisma generate
 RUN yarn build
 
+FROM base AS prod-deps
+WORKDIR /app
+COPY package.json yarn.lock ./
+# Install only production dependencies
+RUN yarn install --frozen-lockfile --production
+
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -21,18 +27,23 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 sveltekit
 
+# Copy built application
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
-COPY --from=builder /app/node_modules/pg ./node_modules/pg
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
-COPY start.sh ./start.sh
 
+# Copy production dependencies
+COPY --from=prod-deps /app/node_modules ./node_modules
+
+# Specifically copy Prisma from builder (it's a devDependency but needed for start.sh migrations)
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+
+# Copy entrypoint script
+COPY start.sh ./start.sh
 RUN chmod +x ./start.sh
+
+# Setup data directory for SQLite
 RUN mkdir -p /app/data && chown -R sveltekit:nodejs /app/data
 
 USER sveltekit
